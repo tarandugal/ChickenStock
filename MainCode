@@ -1,0 +1,64 @@
+# Import modules
+import sys
+import urllib.request  # Used to open the URL
+import time
+
+symbolsToUse = []  # List
+symbols = []  # List
+D = {}  # Dictionary for prices
+t = []  # List for time
+
+
+def prepForOutput():
+    print('Prepping for output...')
+    with open('NYSE.txt', 'r') as o:  # Open text file
+        for line in o:  # Read as o
+            mkStr = str(line)  # Make string
+            splitter = mkStr.split()  # Splits string
+            symbols.append(splitter)
+
+        def idxer(x, y):  # Indexes symbols
+            while 0 <= x <= 3162:  # 3162 stocks
+                symbolsToUse.append(symbols[x][y])
+                x += 1
+                return (symbolsToUse)
+
+        idxer(0, 0)
+
+
+def createLists():
+    for i in symbolsToUse[0:3]:
+        D[i] = []
+    print('Lists created.')
+
+
+def priceReader():
+    print('Outputting prices...')
+    iterate = 0
+    line = 0
+    while True:
+        time.sleep(60 - time.time() % 60)  # Run the code after 60 seconds
+        for i in symbolsToUse[0:3]:
+            file = i + '.txt'  # Create file per stock
+            url = 'https://finance.yahoo.com/chart/' + i  # Create URL per stock
+            sys.stdout = open(file, 'a')  # Append file
+            data = urllib.request.urlopen(url).read()  # Opens URL and reads source code (data)
+            mkStr = str(data)  # Make string out of the source code
+            splitter = mkStr.split('</span>', )  # Split every time reads '</span>'
+            for n in splitter:
+                if 'data-reactid="103"' in n:
+                    idx = splitter.index(n)  # Index the list and find the # of the price
+                    popper = splitter.pop(idx)  # Removes and returns the price
+                    splitit = popper.split('data-reactid="103">')  # Split the list at this string
+                    popit = splitit.pop(-1)  # Gives last item in list
+                    D.get(i).append(float(popit))
+                    t.append(time.time())  # Each price is time stamped
+                    if iterate >= 0:
+                        print('\n', t[line], '\t', D.get(i)[line], '\n')
+                        line += 1
+                    iterate += 1
+
+
+prepForOutput()
+createLists()
+priceReader()
